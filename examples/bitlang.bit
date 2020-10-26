@@ -1,0 +1,17 @@
+# ---- script.bit
+#!/usr/bin/bitlang
+import from "github:bitlang/time" as time
+import from "core:datetime" as datetime
+
+function run arg1
+    var configValue1 true
+    import data.bit as data
+    staticSiteServer data["localhost:8080"].file_server.root
+
+# ---- data.bit
+
+localhost:8080
+    file_server
+        root /var/www/html/
+config true
+clist 1 2 3 4 6.7 5

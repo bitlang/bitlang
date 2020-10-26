@@ -1,0 +1,14 @@
+# The presence of a project.bit file
+# enables project features, such as
+# dependencies and package publishing.
+
+name example
+description An example app
+version 1.0.0
+author Blake Leonard <blake@b252.gq>
+
+dependencies
+    github:bitlang/to-js latest
+
+targets
+    web

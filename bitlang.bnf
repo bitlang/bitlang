@@ -1,0 +1,100 @@
+(* Base tokens *)
+alpha lower = "a" | "b"
+        | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+        | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+        | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+        | "x" | "y" | "z" ;
+alpha upper = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+        | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+        | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+        | "V" | "W" | "X" | "Y" | "Z" ;
+alpha = alpha lower | alpha upper;
+digitexczero = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+digit = "0" | digitexczero ;
+hex alpha lower = "a" | "b" | "c" | "d" | "e" | "f";
+hex alpha upper = "A" | "B" | "C" | "D" | "E" | "F";
+hex alpha = hex alpha lower | hex alpha upper;
+hex digit = hex alpha | digit;
+alphanumeric = alpha | digit;
+stringquote = '"' | "'";
+identifier = alpha | digit | "_";
+nester = ".";
+whitespace = {" ", "\t"};
+newline = "\n";
+
+(* String escapes *)
+escape char = "\\"; 
+    (* should be \ *)
+newline escape = escape char, "n";
+tab escape = escape char, "t";
+hex escape = escape char, "x", 1*4 hex
+backslash literal = escape char, escape char;
+escape = newline escape | tab escape | hex escape | backslash literal;
+
+(* Base primitives *)
+str = stringquote, ({[? all characters ?] | escape}+), stringquote;
+num = ["-" | "+"], { digit | "." digit }+;
+bool = "true" | "on" | "yes" | "false" | "off" | "no";
+null = "null";
+
+(* Primitives *)
+char = "c", stringquote, ([? all characters ?] | escape), stringquote;
+rawstr = "r", str;
+
+(* Special keywords *)
+typeof = "typeof";
+if = "if";
+else = "else";
+set = "set";
+var = "var";
+let = "let";
+const = "const";
+keyword = typeof | if | else | set | var | let | const;
+
+(* Operators *)
+equals = "=";
+not equal = "!", equals;
+greater than = ">";
+less than = "<";
+greater than or equal to = greater than, equals;
+less than or equal to = less than, equals;
+conditional operator = equals | not equal | greater than | less than | greater than or equal to | less than or equal to;
+add = "+";
+subtract = "-";
+multiply = "*";
+exponent = "^";
+arithmetic operator = add | subtract | multiply | exponent;
+
+(* Base statements *)
+typed = identifier | str | num | bool | null | char | rawstr;
+
+execdirective = identifier, [(whitespace, [typed] | whitespace typed, {whitespace, typed})], newline;
+condition = execdirective | identifier | ([typeof, whitespace], typed, [whitespace], conditional operator, [whitespace], typed); 
+    (* identifier here and not typed, because "if null" is an incomplete statement. So you have to store that in a variable *)
+
+(* Special directives *)
+if statement = if, whitespace, condition, newline; 
+else statement = else, newline;
+else if statement = else, [whitespace, if statement];
+set statement = set, whitespace, identifier, [whitespace], equals, [whitespace], typed, newline;
+var statement = (var | let | const), whitespace, identifier, whitespace, typed, newline;
+function declaration = function keyword, whitespace, identifier, {whitespace, identifier}, newline;
+    (* and an indented section after (the function body) *)
+shebang comment = "#!", [? any character ?], newline; 
+python style line comment = "#", [? any character ?+], newline;
+c style line comment = "//", [? any character ?+], newline;
+block comment = "/*", [? any character ?+], "*/";
+    (*
+        A shebang comment that ends in one of: "bit", "bitlang" 
+        indicates that this .bit file is a Bit script/code file
+        rather than a Bit data file.
+        Bit data files are like "var" statements without "var".
+    *)
+
+(* var statement / .bit data files *)
+key one value = identifier, whitespace, ? any character ? - whitespace, newline;
+key list of values = identifier, {whitespace, ? any character ?}+, newline;
+key open list = identifier, "[]", newline; 
+    (* and an indented section after *)
+key open map = identifier, newline;
+    (* and an indented section after *)
